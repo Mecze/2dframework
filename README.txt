@@ -4,13 +4,13 @@ TWOD Framework
 
 Version 0000.00001
 
-- By David López Meseguer
+- By David LÃ³pez Meseguer
 
 ==========================
 
 A 2D framework to Animate graphics from the same .Png/.jpg file.
 This framework answer the question of "Y U NO GIF UNITY?" by providing a way
-to animate easily for Artist in Unity.
+to animate easily for Artists in Unity.
 
 Main Functionality:
 It crops the image into pieces and animate them along the X axis of the original image.
