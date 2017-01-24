@@ -34,6 +34,8 @@ On a 500x1000pixels image will generate a 10x20 sliced image with 20 animations,
 Current restriction:
 The division of pixels has to be exact. A 201x200 pixels image on the 1st example above would fail.
 
+https://www.dropbox.com/s/zxby0ys72zmid7q/twod1.gif?dl=1
+
 ===========================
 Progress:
 ===========================
