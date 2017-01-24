@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
+using System.Collections.Generic;
 using Supyrb;
 
 
@@ -13,6 +13,11 @@ public class twodTextureEditor : Editor
     private bool cellclicked = false;
     private int currentX;
     private int currentY;
+    private bool textureChanged = false;
+    Texture2D maintex;
+    private float yPos = 0f;
+    private float xPos= 0f;
+    private bool firstrun = true;
 
     void OnEnable()
     {
@@ -25,9 +30,9 @@ public class twodTextureEditor : Editor
         SerializedProperty cellsize = serializedObject.FindProperty("cellSize");
         SerializedProperty texture2d = serializedObject.FindProperty("mainTexture");
         SerializedProperty useDefault = serializedObject.FindProperty("useDefaultCellSize");
+        SerializedProperty AnimSets = serializedObject.FindProperty("AnimationSets");
 
         //base.OnInspectorGUI();
-
 
 
 
@@ -38,22 +43,45 @@ public class twodTextureEditor : Editor
         //-----------------
         //Texture Part
         //-----------------
-        Rect ImageRect;
+        Rect ImageRect = new Rect();
         EditorGUILayout.Space();
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Texture", EditorStyles.boldLabel);
         EditorGUILayout.Space();
-        
-        //We getr MainTexture and the ObjectField for it
-        Texture2D maintex = texture2d.GetValue<Texture2D>();
+#if UNITY_EDITOR
+        textureChanged = false;
+        //we check if texture changed since last update:
+        if (maintex != texture2d.GetValue<Texture2D>() && !Application.isPlaying && !firstrun)
+        {
+            textureChanged = true;
+            
+        }
+#endif
+        firstrun = false;
+        //textureChanged = (maintex != texture2d.GetValue<Texture2D>());
+        if (textureChanged) myTwod.SetFrame(null);
+        //We get MainTexture and the ObjectField for it
+        maintex = texture2d.GetValue<Texture2D>();
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Texture: ", GUILayout.MaxWidth(80f));
         texture2d.SetValue<Texture2D>((Texture2D)EditorGUILayout.ObjectField(maintex, typeof(Texture2D),false));
         EditorGUILayout.EndHorizontal();
 
+        //Cellsize init
+        Vector2Int cellSize = cellsize.GetValue<Vector2Int>();
+        Rect CellRect;
+        int cellX =0;
+        int cellY=0;
+
+
+
         //If we HAVE an main texture:
         if (maintex != null)
         {
+            //number of cells on X -1 (-1 to match array's)
+            cellX = Mathf.RoundToInt(maintex.width / (float)cellSize.x - 1);
+            //numer of cells on Y -1 (-1 to match array's)
+            cellY = Mathf.RoundToInt(maintex.height / (float)cellSize.y - 1);
             //Draw Main texture preview            
             //Title:
             EditorGUILayout.LabelField("Texture Preview:");
@@ -64,24 +92,100 @@ public class twodTextureEditor : Editor
             //We feed maintex width and height to our ApplyMaximuns. It will force resize of the image if needed (if too big)
             Vector2 size = ApplyMaximuns(maintex.width, maintex.height, imageclicked);
             //We modify ImageRect with the results of last statement
+            ImageRect.x = 40f;
             ImageRect.y = ImageRect.y + ImageRect.height; //y is the position of last Rect drawn, we want the next position
             ImageRect.width = size.x; 
             ImageRect.height = size.y; //we override with our custom size
             //ImageRect is now the exact Rect where the image should be. position and scale
 
+            //if (ImageRect.x > 2f)xPos = ImageRect.x + ImageRect.width;
+           // if (ImageRect.y > 2f)yPos = ImageRect.y + ImageRect.height;
             //If clicked it will get big on next frame. imageclicked gets fed into "ApplyMaximuns" next frame
-            if (GUILayout.Button("", GUILayout.Width(ImageRect.width), GUILayout.Height(ImageRect.height)))
+            if (GUILayout.Button(imageclicked ? "-":"+", GUILayout.Width(20f), GUILayout.Height(20f)))
             {
                 imageclicked = !imageclicked;
                 
             }
+            //EditorGUILayout.
             //after we draw an image on top of the button.
             EditorGUI.DrawPreviewTexture(new Rect(ImageRect.x, ImageRect.y, ImageRect.width+ 5f, ImageRect.height+ 5f), maintex);
+
+            //Rect lastRect = new Rect(ImageRect.x, ImageRect.y, ImageRect.width, ImageRect.height);
+            //Vector2 LastRect = EditorGUIUtility.ScreenToGUIPoint(new Vector2(ImageRect.x, ImageRect.y));
+            //LastRect = new Vector2(Mathf.Abs(LastRect.x), Mathf.Abs(LastRect.y));
+            //We draw X,Y coordinates on the previewTexture
+            float cellXOffset = ImageRect.width / ((float)cellX +1);
+            float cellYOffset = ImageRect.height / ((float)cellY +1);
+            float offset = 2.5f;
+            if (imageclicked) offset = 2.5f;
+            EditorGUILayout.BeginHorizontal();
+            
+            for (int x = -1; x <= cellX; x++)
+            {
+                string str = x.ToString();
+                Rect littleRect = new Rect(ImageRect.x, ImageRect.y, ImageRect.width, ImageRect.height);
+                littleRect.y += littleRect.height+5f;
+                littleRect.x += ((cellXOffset/2)-offset) + ((cellXOffset+0.5f) * x);
+                littleRect.width = cellXOffset;
+                littleRect.height = cellYOffset;
+                if (x == -1)
+                {
+                    littleRect.width = 45f;
+                    littleRect.x = 0f;
+                    str = "Frames: ";
+                }
+
+
+                EditorGUI.LabelField(littleRect,str,EditorStyles.miniLabel);
+                //EditorGUILayout.LabelField(x.ToString(), EditorStyles.miniBoldLabel);
+                
+            }
+            EditorGUILayout.EndHorizontal();
+            offset = 8f;
+            List<twodAnimationSet> animasets = myTwod.AnimationSets;
+            for (int y = 0; y <= cellY; y++)
+            {
+                string str = y.ToString();
+                Rect littleRect = new Rect(ImageRect.x, ImageRect.y, ImageRect.width, ImageRect.height);
+                littleRect.y += ((cellYOffset/2)-offset) +(y * (cellYOffset+1f));
+                littleRect.x += littleRect.width+10f;
+                littleRect.width = cellXOffset+200f;
+                littleRect.height = cellYOffset;
+                bool setname = false;
+                if (animasets != null)
+                {
+                    if (animasets[y] != null)
+                    {
+                        str = animasets[y].name;
+                        setname = true;
+                    }
+                }
+                if (!setname) str = "Animation " + y.ToString();
+                EditorGUI.LabelField(littleRect, str, EditorStyles.miniLabel);
+
+            }
+
+            //Selection marker
+            Rect markerRect = new Rect(ImageRect.x, ImageRect.y, ImageRect.width, ImageRect.height);
+            markerRect.x += (currentX * (cellXOffset+1f));// + (cellXOffset / 3);
+            markerRect.y += (currentY * (cellYOffset+1f));// + (cellYOffset /3);
+            markerRect.width = cellXOffset;
+            markerRect.height = cellYOffset;
+            //EditorGUI.LabelField(markerRect, "O");
+            Color color = Color.grey;
+            color.a = 0.5f;
+            EditorGUI.DrawRect(markerRect, color);
+
+
+
+
+            GUILayout.Space(ImageRect.height -20f );
 
 
             //EditorGUI.DrawPreviewTexture(r, texture2d.GetValue<Texture2D>());       
             //GUILayout.Space(r.y + r.height + 10f + size.y);
-        }else
+        }
+        else
         {
             //If we have no Texture, show an error instead!
             EditorGUILayout.HelpBox("No Texture Assigned", MessageType.Error);
@@ -131,11 +235,10 @@ public class twodTextureEditor : Editor
             cellsize.SetValue<Vector2Int>(Vector2Int.RoundToVector2Int(EditorGUILayout.Vector2Field("Cell Size", cellsize.GetValue<Vector2Int>().toVector2())));
             //note: Vector2Int is a class created for twod which hold 2 integers
         }
-
+    
         //Cell Preview
         //If we have no main texture, we dont draw anything
-        Vector2Int cellSize = cellsize.GetValue<Vector2Int>();
-        Rect CellRect;
+        
         if (maintex != null && cellSize != null && cellSize.x > 0 && cellSize.y > 0)
         {
             //we do Fail checks -> image wont be usable
@@ -144,13 +247,13 @@ public class twodTextureEditor : Editor
             if (maintex.width % cellSize.x != 0 && maintex.width > cellSize.x)
             {
                 failed = true;
-                EditorGUILayout.HelpBox("Cannot divide the Image\nDividing the width of the Texture results\nin rest. Make sure to feed the correct amount of pixels width and height", MessageType.Error);
+                EditorGUILayout.HelpBox("Cannot divide the Image\nDividing the width of the Texture results\nin rest. Make sure to feed an image with the correct amount of pixels width and height\nand adjust Cell Size correctly", MessageType.Error);
             }
             //float f = 
             if (maintex.height % cellSize.y != 0 && maintex.height > cellSize.y)
             {
                 failed = true;
-                EditorGUILayout.HelpBox("Cannot divide the Image\nDividing the height of the Texture results\nin rest. Make sure to feed the correct amount of pixels width and height", MessageType.Error);
+                EditorGUILayout.HelpBox("Cannot divide the Image\nDividing the height of the Texture results\nin rest. Make sure to feed an image with the correct amount of pixels width and height\nand adjust Cell Size correctly", MessageType.Error);
             }
             if (maintex.width < cellSize.x)
             {
@@ -166,44 +269,71 @@ public class twodTextureEditor : Editor
             //if we didnt fail:
             if (!failed)
             {
-                //number of cells on X -1 (-1 to match array's)
-                int cellX = Mathf.RoundToInt(maintex.width / (float)cellSize.x - 1);
-                //numer of cells on Y -1 (-1 to match array's)
-                int cellY = Mathf.RoundToInt(maintex.height / (float)cellSize.y - 1);
+
                 //note: first spot will be 0,0
 
                 //We now crop our own Texture:
-                
+
 
                 //If crop failed (failsafe, should fail) we do nothing
                 //Sometimes, as editor timing can be cut trough by user actions, it's usefull to have more failsafe statements
+
+
+
+
+
+
+
+
+
+
+
+                //EditorGUILayout.LabelField("asdf");
+
+                EditorGUILayout.LabelField("Cell Preview:", GUILayout.MaxWidth(100f));
                 
                 EditorGUILayout.BeginHorizontal();
 
-                //EditorGUILayout.LabelField("asdf");
-                EditorGUILayout.LabelField("Cell Preview:", GUILayout.MaxWidth(100f));
+                    Rect buttonRect = GUILayoutUtility.GetRect(25f, 22f, GUILayout.MaxWidth(25f));
+                    buttonRect = GUILayoutUtility.GetRect(25f, 22f, GUILayout.MaxWidth(25f));
+                
+                    if (GUI.Button(buttonRect, Resources.Load<Texture>("arrow_up")))
+                        {
+                            currentY = AddWithLimits(currentY, -1, 0, cellY);
+                        }
+
+                    Rect cornerRect = GUILayoutUtility.GetRect(25f, 22f, GUILayout.MaxWidth(25f));
+                
+                EditorGUILayout.EndHorizontal();                    
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("<"))
-                {
-                    currentX = AddWithLimits(currentX, -1, 0, cellX);
-                }
-                EditorGUILayout.BeginVertical();
-                if (GUILayout.Button("^"))
-                {
-                    currentY = AddWithLimits(currentY, -1, 0, cellY);
-                }
-                if (GUILayout.Button("v"))
-                {
-                    currentY = AddWithLimits(currentY, 1, 0, cellY);
-                }
-                EditorGUILayout.EndVertical();
-                if (GUILayout.Button(">"))
-                {
-                    currentX = AddWithLimits(currentX, 1, 0, cellX);
-                }
+
+                    buttonRect = GUILayoutUtility.GetRect(25f, 20f, GUILayout.MaxWidth(25f));                
+                
+                    if (GUI.Button(buttonRect, Resources.Load<Texture>("arrow_left")))
+                    {
+                        currentX = AddWithLimits(currentX, -1, 0, cellX);
+                    }
+                    buttonRect = GUILayoutUtility.GetRect(25f, 20f, GUILayout.MaxWidth(25f));
+                    buttonRect = GUILayoutUtility.GetRect(25f, 20f, GUILayout.MaxWidth(25f));
+
+
+                    if (GUI.Button(buttonRect, Resources.Load<Texture>("arrow_right")))
+                    {
+                        currentX = AddWithLimits(currentX, 1, 0, cellX);
+                    }
+                
                 EditorGUILayout.EndHorizontal();
+                EditorGUILayout.BeginHorizontal();
+                    buttonRect = GUILayoutUtility.GetRect(25f, 22f, GUILayout.MaxWidth(25f));
+                    buttonRect = GUILayoutUtility.GetRect(25f, 22f, GUILayout.MaxWidth(25f));
+                    if (GUI.Button(buttonRect, Resources.Load<Texture>("arrow_down")))
+                    {
+                        currentY = AddWithLimits(currentY, 1, 0, cellY);
+                    }                
+                    buttonRect = GUILayoutUtility.GetRect(25f, 22f, GUILayout.MaxWidth(25f));
                 EditorGUILayout.EndHorizontal();
                 
+
                 //Failsafe. if invaled position, go back to 0,0
                 if (!checkValid(currentX,currentY,cellX,cellY)) { currentX = 0; currentY = 0; }
 
@@ -211,18 +341,19 @@ public class twodTextureEditor : Editor
                 if (celltex != null)
                 {
                     //This whole part follows the same logic and mechanics than ImageRect setup.
-                    CellRect = GUILayoutUtility.GetLastRect();
+                    //CellRect = GUILayoutUtility.GetLastRect();
+                    CellRect = new Rect(cornerRect.x, cornerRect.y, cornerRect.width, cornerRect.height);
                     Vector2 size = ApplyMaximuns(celltex.width, celltex.height, cellclicked);
-                    CellRect.y = CellRect.y + CellRect.height;
+                    CellRect.x = CellRect.x + CellRect.width + 30f;
                     CellRect.width = size.x;
                     CellRect.height = size.y;
 
 
 
-                    if (GUILayout.Button("", GUILayout.Width(size.x), GUILayout.Height(size.y)))
+                    if (GUI.Button(new Rect(CellRect.x-25f,CellRect.y,20f,20f), cellclicked?"-":"+"))
                     {
                         cellclicked = !cellclicked;
-                        //Debug.Log(cellclicked.ToString());
+                        
                     }
                     EditorGUI.DrawPreviewTexture(new Rect(CellRect.x, CellRect.y, CellRect.width + 5f, CellRect.height + 5f), (Texture)celltex);
 
@@ -231,8 +362,12 @@ public class twodTextureEditor : Editor
                     {
                         myTwod.SetFrame(currentY, currentX, true);
                     }
+                    EditorGUILayout.HelpBox("Use arrows to chose a Cell from Texture Preview", MessageType.Info);
 
-
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox("Cropping Failed. Fix other errors and check if your Texture is Readable",MessageType.Error);
                 }
             }
             else
@@ -246,7 +381,7 @@ public class twodTextureEditor : Editor
             //do nothing
         }
 
-
+        
 
 
         EditorGUILayout.Space();

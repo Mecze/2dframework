@@ -48,6 +48,7 @@ public class twodTexture : MonoBehaviour {
     public Vector2Int cellSize;
 
     //[Header("Animations Sets")]
+    [SerializeField]
     [HideInInspector]
     public List<twodAnimationSet> AnimationSets;
 
@@ -150,7 +151,7 @@ public class twodTexture : MonoBehaviour {
         InitializeValues();        
 
         //Initial CROP        
-        SetFrame(0, 0);
+        //SetFrame(0, 0);
 
         //Initalize animator (and other things)
         try
@@ -212,7 +213,7 @@ public class twodTexture : MonoBehaviour {
     /// <param name="frame">Frame</param>
     public void SetFrame(int animation, int frame,bool UpdateSpriteStore = false)
     {
-        if (UpdateSpriteStore) InitializeValues();
+        if (UpdateSpriteStore) InitializeValues();        
         MyRenderer.sprite = SpriteStore[frame, animation];
         if (_frameEvents[frame, animation] != null)
         {
@@ -229,6 +230,15 @@ public class twodTexture : MonoBehaviour {
         twodAnimationSet tas = AnimationSets.Find(x => x.name == animationName);
         if (tas == null) { Debug.LogError("SetFrame tried to look for '" + animationName + "' on AnimationSets and didnt find it. Object: " + gameObject.name); return; }
         SetFrame(tas.animationIndex, frame);
+    }
+
+    /// <summary>
+    /// This method changes myRenderer to the targeted sprite (Atomic version)
+    /// </summary>
+    /// <param name="sprite"></param>
+    public void SetFrame(Sprite sprite)
+    {        
+        MyRenderer.sprite = sprite;
     }
     
         
@@ -286,17 +296,26 @@ public class twodTexture : MonoBehaviour {
         //Se handle possible errors
         if (posX < 0 || posX > mainTexture.width)
         {
-            Debug.LogError("Frame not Found when croping image, please check the frame. Object: " + gameObject.name);
+
+            if (Application.isPlaying) Debug.LogError("Frame not Found when croping image, please check the frame. Object: " + gameObject.name);
             return null;
         }
         if (posY < 0 || posY > mainTexture.height)
         {
-            Debug.LogError("Animation not Found when croping image, please check he animation. Object: " + gameObject.name);
+            if (Application.isPlaying) Debug.LogError("Animation not Found when croping image, please check he animation. Object: " + gameObject.name);
             return null;
         }
 
         //We get an array of pixels from initial position and size of the cell. (crop)
-        Color[] pixels = mainTexture.GetPixels(posX, posY, cellSize.x, cellSize.y);
+        Color[] pixels;
+        try
+        {
+            pixels = mainTexture.GetPixels(posX, posY, cellSize.x, cellSize.y);
+        }
+        catch
+        {
+            return null;
+        }
         //We create a new texture to store the cropeed pixels
         Texture2D newCropped = new Texture2D(cellSize.x, cellSize.y);
         //We now store the pixels into the new texture and apply for graphic card to update.

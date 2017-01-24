@@ -1,4 +1,4 @@
-﻿/// <summary>
+/// <summary>
 /// 
 ///     ######################
 ///     #                    #
@@ -17,7 +17,6 @@ using UnityEngine;
 /// <summary>
 /// twodAnimationSets carries basic information about animations
 /// </summary>
-
 [System.Serializable]
 public class twodAnimationSet {
     /// <summary>

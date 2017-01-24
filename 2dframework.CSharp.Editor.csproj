@@ -110,6 +110,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Editor\SerializedPropertyExtensions.cs" />
     <Compile Include="Assets\Scripts\Editor\TouchableEditor.cs" />
+    <Compile Include="Assets\Scripts\Editor\twodAnimatorEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\twodControllerEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\twodTextureEditor.cs" />
   </ItemGroup>

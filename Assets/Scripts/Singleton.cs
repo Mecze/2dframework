@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Singleton<Instance> : MonoBehaviour where Instance : Singleton<Instance> {
+    
     static Instance _instance;
     public static Instance instance
     {
@@ -16,6 +17,7 @@ public class Singleton<Instance> : MonoBehaviour where Instance : Singleton<Inst
             return _instance;
         }
     }
+    [SerializeField]
     public bool isPersistent;
 
     public virtual void Awake()

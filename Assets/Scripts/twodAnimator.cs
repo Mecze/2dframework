@@ -36,14 +36,22 @@ public class twodAnimator : MonoBehaviour {
     bool useDefaultFrameFrecuency;
 
     /// <summary>
-    /// Custom Frame Frequency
+    /// Current Animation FrameFrecuency
     /// </summary>
     [HideInInspector]    
-    float frameFrecuency {
+    float currentFrameFrecuency {
         get {
             if (currentAnimation == null)
             {
-                return twodController.instance.frameFrequency;
+                if (twodController.instance == null)
+                {
+                    Debug.LogError("No twodController Instance to create Animations");
+                    return 0f;
+                }else
+                {
+                    return twodController.instance.frameFrequency;
+                }
+                
             }else
             {
                 return currentAnimation.frameFrequency;
@@ -56,16 +64,42 @@ public class twodAnimator : MonoBehaviour {
     }
 
     /// <summary>
+    /// This is the Frame Frecuency with which all Animations will be 
+    /// created with under this Object.
+    /// </summary>
+    [SerializeField]    
+    [HideInInspector]
+    float frameFrecuency = 0.5f;
+
+
+    /// <summary>
     /// Public List of Animations
     /// </summary>
+    [SerializeField]
+    [HideInInspector]
     public List<twodAnimation> Animations;
+
+    /// <summary>
+    /// Start Playing
+    /// </summary>
+    [SerializeField]
+    [HideInInspector]
+    public bool startPlaying = true;
+
+    
+    /// <summary>
+    /// The animation to play on start
+    /// </summary>
+    [SerializeField]
+    [HideInInspector]
+    public int firstAnimation = 0;
 
     #endregion
 
     #region Inner Variables and References
     /// <summary>
     /// Inner referencer to my twodTexture
-    /// </summary>
+    /// </summary>    
     twodTexture myTwod;
     /// <summary>
     /// Dinamic reference to my twodTexture
@@ -165,18 +199,59 @@ public class twodAnimator : MonoBehaviour {
     /// </summary>
     public void Initialize()
     {
-        //Initalize FrameFrequency
-        if (useDefaultFrameFrecuency || frameFrecuency == 0) frameFrecuency = twodController.instance.frameFrequency;
-        
-        //Initalize animation list        
-        Animations = new List<twodAnimation>();
-        for (int i = 0; i < MyTwod.AnimationSets.Count; i++)
+        //Initalize FrameFrequency for this object
+        if (useDefaultFrameFrecuency || frameFrecuency == 0)
         {
-            Animations.Add(new twodAnimation(MyTwod.AnimationSets[i], frameFrecuency,this));
+            if (twodController.instance == null)
+            {
+                Debug.LogError("No twodController Instance to create Animations");
+                frameFrecuency = 0f;
+            }
+            else
+            {
+                frameFrecuency = twodController.instance.frameFrequency;
+            }
         }
 
-        PlayAnimation(Animations[0]);
+        InitializeAnimationsList();
+
+
+
+        
+        if (startPlaying) PlayAnimation(Animations[firstAnimation]);
     }
+    public void InitializeAnimationsList()
+    {
+        //Initalize animation list    
+        List<twodAnimation> AnimationsTemp = new List<twodAnimation>();
+        for (int i = 0; i < MyTwod.AnimationSets.Count; i++)
+        {
+
+            AnimationsTemp.Add(new twodAnimation(MyTwod.AnimationSets[i], frameFrecuency, this));
+        }
+        if (Animations != null && Animations.Count > 0)
+        {
+            foreach (twodAnimation ta in AnimationsTemp)
+            {
+                twodAnimation other = Animations.Find(x => x.animationIndex == ta.animationIndex);
+                if (other != null)
+                {
+                    ta.name = other.name;
+                    ta.frameFrequency = other.frameFrequency;
+                }
+                twodAnimationSet otherset = MyTwod.AnimationSets.Find(x => x.animationIndex == ta.animationIndex);
+                if (otherset != null)
+                {//we feed the new name backwards
+                    if (other != null)
+                    {
+                        otherset.name = other.name;
+                    }
+                }
+            }
+        }
+        Animations = AnimationsTemp;
+    }
+
     #endregion
 
     #region Animation Controls
@@ -232,12 +307,12 @@ public class twodAnimator : MonoBehaviour {
     {
         if (!playing) return; //we are not playing
         if (currentAnimation == null) return; //failsafe
-        if (frameFrecuency == 0f) return; //failsafe
+        if (currentFrameFrecuency == 0f) return; //failsafe
         if (currentFrame > (currentAnimation.numberOfFrames - 1) || currentFrame < 0) currentFrame = 0; //failsafe
 
         if (timer < Time.time)
         {
-            timer = Time.time + frameFrecuency;
+            timer = Time.time + currentFrameFrecuency;
             currentFrame++;
         }
     }

@@ -55,9 +55,25 @@ public class twodAnimation : twodAnimationSet {
     public twodAnimation() : this("", 0, 0, null,0f, null){}
     #endregion   
 
+    /// <summary>
+    /// This constructor is called by Editor to add instances of the animation by hand
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="FrameFrecuency"></param>
+    /// <param name="AnimationIndex"></param>
+    public twodAnimation(string name,int AnimationIndex, float FrameFrecuency)
+    {
+        this.animationIndex = AnimationIndex;
+        this.frameFrequency = FrameFrecuency;
+        this.myAnimator = null;
+        this.myTWOD = null;
+        this.name = name;
+        this.numberOfFrames = 0;
+    }
+
 
     [SerializeField]
-    [Range(0.0f, 3f)]
+    [Range(0.0f, 5f)]
     public float frameFrequency;
     [SerializeField]
     public twodAnimator myAnimator;
