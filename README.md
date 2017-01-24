@@ -16,10 +16,12 @@ Main Functionality:
 It crops the image into pieces and animate them along the X axis of the original image.
 On the Y axis more Animations are stored:
 
-  Frames    || Animation name
-0,1,2,3,4,5 -> "idle"
-0,1,2,3,4,5 -> "walking"
-0,1,2,3,4,5 -> "attackin"
+<table> 
+<tr><td colspan="6">Frames (x axis)</td><td> Animation name (y axis)</td></tr>
+<tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td> "idle" </td></tr>
+<tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td> "walking"</td> </tr>
+<tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td> "attackin"</td> </tr>
+</table>
 
 Pure RPG-Maker style.
 This makes it easy to use Software like PyxelEdit with Unity.
