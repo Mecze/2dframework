@@ -14,7 +14,7 @@ to animate easily for Artists in Unity.
 
 Main Functionality:
 It crops the image into pieces and animate them along the X axis of the original image.
-On the Y axis more elements Animations are stored:
+On the Y axis more Animations are stored:
 
   Frames    || Animation name
 0,1,2,3,4,5 -> "idle"
@@ -28,11 +28,11 @@ Features Animation System with built-in Events.
 It supports any number of frames/animations and any size for "CellSize".
 
 For example: Cell size = x: 50pixels y: 50pixels
-will generate a 4 cell sliced Image from a 200x200 pixels with 2 animations with 2 frames each.
+will generate a 4 cell sliced Image from a 200x200 pixels image with 2 animations with 2 frames each.
 On a 500x1000pixels image will generate a 10x20 sliced image with 20 animations, 10 frames each.
 
 Current restriction:
-The division of pixels has to exact. A 201x200 pixels image on the 1st example would fail.
+The division of pixels has to be exact. A 201x200 pixels image on the 1st example above would fail.
 
 ===========================
 Progress:
