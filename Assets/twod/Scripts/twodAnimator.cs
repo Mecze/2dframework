@@ -217,39 +217,32 @@ public class twodAnimator : MonoBehaviour {
 
 
 
-        
-        if (startPlaying) PlayAnimation(Animations[firstAnimation]);
+        if (startPlaying && Animations.Count >0) PlayAnimation(Animations[firstAnimation]);
     }
     public void InitializeAnimationsList()
     {
-        //Initalize animation list    
+        if (MyTwod == null) return;
+        if (MyTwod.AnimationSets == null) return;
+        if (MyTwod.AnimationSets.Count == 0) return;
+        float framefrecuency = !useDefaultFrameFrecuency ? frameFrecuency : twodController.instance.frameFrequency;
         List<twodAnimation> AnimationsTemp = new List<twodAnimation>();
         for (int i = 0; i < MyTwod.AnimationSets.Count; i++)
         {
-
-            AnimationsTemp.Add(new twodAnimation(MyTwod.AnimationSets[i], frameFrecuency, this));
+            AnimationsTemp.Add(new twodAnimation(MyTwod.AnimationSets[i], framefrecuency, this, false));
         }
-        if (Animations != null && Animations.Count > 0)
+
+        if (Animations.Count != MyTwod.AnimationSets.Count)
         {
-            foreach (twodAnimation ta in AnimationsTemp)
+            Animations = AnimationsTemp;
+        }else
+        {
+            for (int e = 0; e < MyTwod.AnimationSets.Count; e++)
             {
-                twodAnimation other = Animations.Find(x => x.animationIndex == ta.animationIndex);
-                if (other != null)
-                {
-                    ta.name = other.name;
-                    ta.frameFrequency = other.frameFrequency;
-                }
-                twodAnimationSet otherset = MyTwod.AnimationSets.Find(x => x.animationIndex == ta.animationIndex);
-                if (otherset != null)
-                {//we feed the new name backwards
-                    if (other != null)
-                    {
-                        otherset.name = other.name;
-                    }
-                }
+                MyTwod.AnimationSets[e].name = Animations[e].name;
             }
         }
-        Animations = AnimationsTemp;
+
+        //Animations = AnimationsTemp;
     }
 
     #endregion
@@ -328,6 +321,8 @@ public class twodAnimator : MonoBehaviour {
     {
         Animations.ForEach(x => x.frameFrequency = frecuency);
     }
+
+    
 
     #endregion
 

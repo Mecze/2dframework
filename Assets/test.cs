@@ -2,16 +2,12 @@ using UnityEngine;
 using System.Collections;
 
 public class test : MonoBehaviour {
-    /*
-	// Use this for initialization
-	void Start () {
-        twodTexture myTwod;
-        myTwod = GetComponent<twodTexture>();
-        
-	}
-	public void ssssss()
+    public Texture2D test1;
+    public Sprite test2;
+
+
+    void Awake()
     {
-        Debug.Log("ASDF");
+        GetComponent<twodAnimator>().PlayAnimation("South");
     }
-	*/
 }

@@ -69,15 +69,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Singleton.cs" />
-    <Compile Include="Assets\Scripts\Touchable.cs" />
-    <Compile Include="Assets\Scripts\Vector2Int.cs" />
-    <Compile Include="Assets\Scripts\twodAnimation.cs" />
-    <Compile Include="Assets\Scripts\twodAnimationSet.cs" />
-    <Compile Include="Assets\Scripts\twodAnimator.cs" />
-    <Compile Include="Assets\Scripts\twodController.cs" />
-    <Compile Include="Assets\Scripts\twodTexture.cs" />
     <Compile Include="Assets\test.cs" />
+    <Compile Include="Assets\twod\Scripts\Singleton.cs" />
+    <Compile Include="Assets\twod\Scripts\Touchable.cs" />
+    <Compile Include="Assets\twod\Scripts\Vector2Int.cs" />
+    <Compile Include="Assets\twod\Scripts\twodAnimation.cs" />
+    <Compile Include="Assets\twod\Scripts\twodAnimationSet.cs" />
+    <Compile Include="Assets\twod\Scripts\twodAnimator.cs" />
+    <Compile Include="Assets\twod\Scripts\twodController.cs" />
+    <Compile Include="Assets\twod\Scripts\twodTexture.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

@@ -32,7 +32,7 @@ public class twodAnimation : twodAnimationSet {
     /// <param name="AnimationIndex"></param>
     /// <param name="MyTexture"></param>
     /// <param name="FrameFrequency"></param>
-    public twodAnimation(string Name, int NumberOfFrames, int AnimationIndex, twodTexture MyTexture,float FrameFrequency, twodAnimator MyAnimator) : base(Name,NumberOfFrames,AnimationIndex,MyTexture) 
+    public twodAnimation(string Name, int NumberOfFrames, int AnimationIndex, twodTexture MyTexture,float FrameFrequency, twodAnimator MyAnimator,bool setByUser) : base(Name,NumberOfFrames,AnimationIndex,MyTexture, setByUser) 
     {
         frameFrequency = FrameFrequency;
         myAnimator = MyAnimator;
@@ -41,18 +41,18 @@ public class twodAnimation : twodAnimationSet {
     /// COPY constructor
     /// </summary>
     /// <param name="other"></param>
-    public twodAnimation(twodAnimation other) : this(other.name, other.numberOfFrames, other.animationIndex, other.myTWOD, other.frameFrequency, other.myAnimator) { }
+    public twodAnimation(twodAnimation other) : this(other.name, other.numberOfFrames, other.animationIndex, other.myTWOD, other.frameFrequency, other.myAnimator,other.setByUser) { }
     /// <summary>
     /// COPY from twodAnimationSet Constructor
     /// </summary>
     /// <param name="mySet"></param>
     /// <param name="FrameFrequency"></param>
-    public twodAnimation(twodAnimationSet mySet, float FrameFrequency, twodAnimator MyAnimator) : this(mySet.name, mySet.numberOfFrames, mySet.animationIndex, mySet.myTWOD, FrameFrequency, MyAnimator) { }
+    public twodAnimation(twodAnimationSet mySet, float FrameFrequency, twodAnimator MyAnimator,bool setByUser) : this(mySet.name, mySet.numberOfFrames, mySet.animationIndex, mySet.myTWOD, FrameFrequency, MyAnimator,setByUser) { }
   
     /// <summary>
     /// Empty Constructor
     /// </summary>
-    public twodAnimation() : this("", 0, 0, null,0f, null){}
+    public twodAnimation() : this("", 0, 0, null,0f, null, false){}
     #endregion   
 
     /// <summary>
@@ -69,6 +69,7 @@ public class twodAnimation : twodAnimationSet {
         this.myTWOD = null;
         this.name = name;
         this.numberOfFrames = 0;
+        this.setByUser = false;
     }
 
 

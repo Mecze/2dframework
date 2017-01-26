@@ -41,6 +41,11 @@ public class twodAnimationSet {
     /// </summary>
     public int animationIndex;
 
+    /// <summary>
+    /// This tells the engine that this animation set was set buy the user
+    /// via AnimationEditor
+    /// </summary>
+    public bool setByUser;
 
     #region Constructors
     /// <summary>
@@ -50,21 +55,22 @@ public class twodAnimationSet {
     /// <param name="NumberOfFrames"></param>
     /// <param name="AnimationIndex"></param>
     /// <param name="MyTexture"></param>
-    public twodAnimationSet(string Name, int NumberOfFrames, int AnimationIndex, twodTexture MyTexture) 
+    public twodAnimationSet(string Name, int NumberOfFrames, int AnimationIndex, twodTexture MyTexture, bool SetByUser) 
     {
         name = Name;
         numberOfFrames = NumberOfFrames;
         animationIndex = AnimationIndex;
         myTWOD = MyTexture;
+        this.setByUser = SetByUser;
     }   
     /// <summary>
     /// Empty Constructor
     /// </summary>
-    public twodAnimationSet() :this("Animation",0,0,null) { } 
+    public twodAnimationSet() :this("Animation",0,0,null, false) { } 
     /// <summary>
     /// Copy Constructor
     /// </summary>
     /// <param name="other"></param>
-    public twodAnimationSet(twodAnimationSet other) : this(other.name, other.numberOfFrames, other.animationIndex, other.myTWOD) { }
+    public twodAnimationSet(twodAnimationSet other) : this(other.name, other.numberOfFrames, other.animationIndex, other.myTWOD, other.setByUser) { }
     #endregion
 }

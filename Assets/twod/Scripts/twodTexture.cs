@@ -33,6 +33,15 @@ public class twodTexture : MonoBehaviour {
     [HideInInspector]
     Texture2D mainTexture;
 
+    [SerializeField]
+    [HideInInspector]
+    Sprite ChosedSprite;
+
+    [SerializeField]
+    [HideInInspector]
+    Texture2D ChosedTexture;
+
+
     /// <summary>
     /// Define if we use the Controller CellSize
     /// </summary>
@@ -78,6 +87,7 @@ public class twodTexture : MonoBehaviour {
     int topZero {
         get
         {
+            if (useDefaultCellSize) return mainTexture.height- twodController.instance.cellSize.y;
             return mainTexture.height - cellSize.y;
         }
     }
@@ -170,27 +180,45 @@ public class twodTexture : MonoBehaviour {
     {
         //Set cellSize
         if (useDefaultCellSize) cellSize = twodController.instance.cellSize;
-        if (cellSize.x == 0 && cellSize.y == 0) Debug.LogError("Cellsize in twodTexture is 0,0 nothing will be shown!. Object: " + gameObject.name);
+        if (cellSize.x == 0 || cellSize.y == 0) { if(Application.isPlaying)Debug.LogError("Cellsize X or Y in twodTexture is 0 nothing will be shown!. Object: " + gameObject.name); return; }
 
         //we warn the user that the texture is imperfect (This should be fixed!)
-        if (mainTexture.width % cellSize.x != 0) Debug.LogError("Texture width and CellSize X are not on the correct format. there are left over pixels at the end of the texture, this can lead to weirdness. Object: " + gameObject.name);
-        if (mainTexture.height % cellSize.y != 0) Debug.LogError("Texture heigth and CellSize Y are not on the correct format. there are left over pixels at the end of the texture, this can lead to weirdness. Object: " + gameObject.name);
+        
+        if (mainTexture.width % cellSize.x != 0 && Application.isPlaying) Debug.LogError("Texture width and CellSize X are not on the correct format. there are leftover pixels at the end of the texture, this can lead to weirdness\nGame will try to play normally ignoring this pixels. \nObject: " + gameObject.name);
+        if (mainTexture.height % cellSize.y != 0 && Application.isPlaying) Debug.LogError("Texture heigth and CellSize Y are not on the correct format. there are leftover pixels at the end of the texture, this can lead to weirdness\nGame will try to play normally ignoring this pixels. \nObject: " + gameObject.name);
 
         //we count how many cells we have on each direction
         int cellXCount = Mathf.FloorToInt(mainTexture.width / cellSize.x);
         int cellYCount = Mathf.FloorToInt(mainTexture.height / cellSize.y);
 
-        //Initialize the list of animations
-        AnimationSets = new List<twodAnimationSet>();
+        //Initialize the list of animations        
+        if (AnimationSets == null) AnimationSets = NewSets(cellYCount,cellXCount);
 
         //Initialize Store
         SpriteStore = new Sprite[cellXCount, cellYCount];
 
+        List<twodAnimationSet> tempList = new List<twodAnimationSet>();
         //This FOR fills AnimationSets AND SpriteStore
         for (int i = 0; i < cellYCount; i++)
         {
-            //Populate AnimationSets
-            AnimationSets.Add(new twodAnimationSet("Animation " + i.ToString(), cellXCount, i, this));
+            //we check AnimationSets Array.
+            //It is possible that Animation Array wasnt created now, but was created before with
+            //another texture, with another number of animations.
+            //So we check if we have arrived to a point that this arrray doesnt have something in that index:
+            if (AnimationSets.Count == i)
+                //And we create it:
+                AnimationSets.Add(new twodAnimationSet("Animation " + i.ToString(), cellXCount, i, this, false));
+            
+            //Now we check this item, if it was created by user, we override everything except for name and set by user
+            if (AnimationSets[i].setByUser) AnimationSets[i] = new twodAnimationSet(AnimationSets[i].name, cellXCount, i, this, AnimationSets[i].setByUser);
+
+            //To elimnate duplicates and old items we fill a temporary list
+            tempList.Add(AnimationSets[i]); 
+                //That's is how we conserve the names on the twodTextureEditor Animation Names.
+
+            //Note: twodTexture.AnimationSets it's completly different to twodAnimator.Animations.
+            //Animation Derive from AnimationSet but mechanicly the List twodAnimator.Animations is the important one.
+            //twodTexture.AnimationsSets fullfils the purpose of user friendly inspector
 
             //Populate inner SpriteStore
             for (int e = 0; e < cellXCount; e++)
@@ -199,8 +227,21 @@ public class twodTexture : MonoBehaviour {
 
             }
         }
+        AnimationSets = tempList;
+        
+
         //Initialize Event Array
         _frameEvents = new GenericTwodEventHandler[cellXCount, cellYCount];
+    }
+
+    List<twodAnimationSet> NewSets(int arrayLength, int numberOfFrames)
+    {
+        List<twodAnimationSet> r = new List<twodAnimationSet>();
+        for (int i = 0; i < arrayLength; i++)
+        {
+            r.Add(new twodAnimationSet("Animation " + i.ToString(), numberOfFrames, i, this,false));
+        }
+        return r;
     }
 
     #endregion
@@ -213,7 +254,9 @@ public class twodTexture : MonoBehaviour {
     /// <param name="frame">Frame</param>
     public void SetFrame(int animation, int frame,bool UpdateSpriteStore = false)
     {
-        if (UpdateSpriteStore) InitializeValues();        
+        if (UpdateSpriteStore) InitializeValues();
+        if (SpriteStore == null) return;
+        if (SpriteStore.GetLength(0)== 0 || SpriteStore.GetLength(1) == 0 || SpriteStore.GetLength(0)<frame || SpriteStore.GetLength(1)<animation) return;
         MyRenderer.sprite = SpriteStore[frame, animation];
         if (_frameEvents[frame, animation] != null)
         {
@@ -254,26 +297,40 @@ public class twodTexture : MonoBehaviour {
     /// <returns></returns>
     public Sprite CropSprite(int animation, int frame)
     {
+        if (mainTexture == null) return null;
+        Vector2Int thisVector = cellSize;
+        if (useDefaultCellSize) thisVector = twodController.instance.cellSize;
         //Get pixel starting positions
-        int posX = (cellSize.x * frame);
-        int posY = topZero - (cellSize.y * animation);
+        int posX = (thisVector.x * frame);
+        int posY = topZero - (thisVector.y * animation);
 
         //Se handle possible errors
         if (posX < 0 || posX > mainTexture.width)
         {
-            Debug.LogError("Frame not Found when croping image, please check the frame. Object: " + gameObject.name);
+
+            if (Application.isPlaying) Debug.LogError("Frame not Found when croping image, please check the frame. Object: " + gameObject.name);
             return null;
         }
         if (posY < 0 || posY > mainTexture.height)
         {
-            Debug.LogError("Animation not Found when croping image, please check he animation. Object: " +gameObject.name);
+            if (Application.isPlaying) Debug.LogError("Animation not Found when croping image, please check the animation. Object: " + gameObject.name);
+            return null;
+        }
+        if (posX + thisVector.x > mainTexture.width)
+        {
+            if (Application.isPlaying) Debug.LogError("Frame outside texture range, please Check Cell Size (X axis)\nIt might be too big. Object: " + gameObject.name);
+            return null;
+        }
+        if (posY + thisVector.y > mainTexture.height)
+        {
+            if (Application.isPlaying) Debug.LogError("Frame outside texture range, please Check Cell Size (Y axis)\nIt might be too big.Object: " + gameObject.name);
             return null;
         }
 
         //We get an array of pixels from initial position and size of the cell. (crop)
-        Color[] pixels = mainTexture.GetPixels(posX, posY, cellSize.x, cellSize.y);
+        Color[] pixels = mainTexture.GetPixels(posX, posY, thisVector.x, thisVector.y);
         //We create a new texture to store the cropeed pixels
-        Texture2D newCropped = new Texture2D(cellSize.x, cellSize.y);
+        Texture2D newCropped = new Texture2D(thisVector.x, thisVector.y);
         //We now store the pixels into the new texture and apply for graphic card to update.
         newCropped.SetPixels(pixels);
         newCropped.Apply();
@@ -290,10 +347,13 @@ public class twodTexture : MonoBehaviour {
     {
         if (mainTexture == null) return null;
         //Get pixel starting positions
-        int posX = (cellSize.x * frame);
-        int posY = topZero - (cellSize.y * animation);
+        Vector2Int thisVector = cellSize;
+        if (useDefaultCellSize) thisVector = twodController.instance.cellSize;
+       
+        int posX = (thisVector.x * frame);
+        int posY = topZero - (thisVector.y * animation);
 
-        //Se handle possible errors
+        //handle possible errors
         if (posX < 0 || posX > mainTexture.width)
         {
 
@@ -302,30 +362,107 @@ public class twodTexture : MonoBehaviour {
         }
         if (posY < 0 || posY > mainTexture.height)
         {
-            if (Application.isPlaying) Debug.LogError("Animation not Found when croping image, please check he animation. Object: " + gameObject.name);
+            if (Application.isPlaying) Debug.LogError("Animation not Found when croping image, please check the animation. Object: " + gameObject.name);
             return null;
         }
+        if (posX + thisVector.x > mainTexture.width)
+        {
+            if (Application.isPlaying) Debug.LogError("Frame outside texture range, please Check Cell Size (X axis)\nIt might be too big. Object: " + gameObject.name);
+            return null;
+        }
+        if (posY + thisVector.y > mainTexture.height)
+        {
+            if (Application.isPlaying) Debug.LogError("Frame outside texture range, please Check Cell Size (Y axis)\nIt might be too big.Object: " + gameObject.name);
+        return null;
+        }
+
 
         //We get an array of pixels from initial position and size of the cell. (crop)
         Color[] pixels;
         try
         {
-            pixels = mainTexture.GetPixels(posX, posY, cellSize.x, cellSize.y);
+            
+            pixels = mainTexture.GetPixels(posX, posY, thisVector.x, thisVector.y);
         }
         catch
         {
             return null;
         }
         //We create a new texture to store the cropeed pixels
-        Texture2D newCropped = new Texture2D(cellSize.x, cellSize.y);
+        Texture2D newCropped = new Texture2D(thisVector.x, thisVector.y);
         //We now store the pixels into the new texture and apply for graphic card to update.
-        if (cellSize.x <= 0 || cellSize.y <= 0) return null;
+        if (thisVector.x <= 0 || thisVector.y <= 0) return null;
 
         newCropped.SetPixels(pixels);
         newCropped.Apply();
         //We create a new Sprite with our texture and return
         return newCropped;
     }
+    #endregion
+
+    #region SetMainTExture
+
+    /// <summary>
+    /// Changes the mainTexture of this twodTexture
+    /// </summary>
+    /// <param name="texture"></param>
+    public void SetMainTexture(Texture texture)
+    {
+        SetMainTexture((Texture2D)texture);
+    }
+
+    /// <summary>
+    /// Changes the mainTexture of this twodTexture
+    /// </summary>
+    /// <param name="texture"></param>
+    public void SetMainTexture(Texture2D texture)
+    {
+        if (texture == null) { mainTexture = null; return; }
+        //sprite.texture.
+        Texture2D texture2d = new Texture2D((int)texture.width, (int)texture.height, texture.format, false);
+        texture2d.Apply();
+        //Texture2D texture2d = new Texture2D((int)sprite.texture.width, (int)sprite.texture.height,sprite.texture.format,false);
+        var pixels = texture.GetRawTextureData();
+        texture2d.LoadRawTextureData(pixels);
+        texture2d.name = texture.name;
+        texture2d.Apply();
+        if (texture2d is Texture2D)
+        {
+            mainTexture = texture2d;
+        }
+        else
+        {
+            Debug.Log("Cannot Convert into Texture2D");
+        }
+        
+    }
+    /// <summary>
+    /// Changes the mainTexture of this twodTexture
+    /// </summary>
+    /// <param name="texture"></param>
+    public void SetMainTexture(Sprite sprite)
+    {
+        if (sprite == null) { mainTexture = null; return; }
+        //sprite.texture.
+        Texture2D texture2d = new Texture2D((int)sprite.texture.width, (int)sprite.texture.height, sprite.texture.format, false);
+        texture2d.Apply();
+        //Texture2D texture2d = new Texture2D((int)sprite.texture.width, (int)sprite.texture.height,sprite.texture.format,false);
+        var pixels = sprite.texture.GetRawTextureData();
+        texture2d.LoadRawTextureData(pixels);
+        texture2d.name = sprite.name;
+        texture2d.Apply();
+        if (texture2d is Texture2D)
+        {
+            mainTexture = texture2d;
+        }
+        else
+        {
+            Debug.Log("Cannot Convert Sprite into Texture2D");
+        }
+    }
+
+
+
     #endregion
 
 }

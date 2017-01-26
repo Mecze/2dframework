@@ -22,6 +22,7 @@ public delegate void GenericTwodEventHandler();
 
 [CustomEditor(typeof(twodAnimator))]
 public class twodAnimatorEditor : Editor {
+    bool firstPaint = true;
     private SerializedObject m_Object;
     private SerializedProperty m_Property;
     private ReorderableList list;
@@ -34,7 +35,7 @@ public class twodAnimatorEditor : Editor {
         m_Object = new UnityEditor.SerializedObject(target);
         SerializedProperty framefrecuency = serializedObject.FindProperty("frameFrecuency");
         //list = new ReorderableList(serializedObject,serializedObject.FindProperty("Animsdf"),)
-        list = new ReorderableList(serializedObject, serializedObject.FindProperty("Animations"), false, true, true, true);
+        list = new ReorderableList(serializedObject, serializedObject.FindProperty("Animations"), false, true, false, false);        
         list.drawElementCallback =
     (Rect rect, int index, bool isActive, bool isFocused) => {
         var element = list.serializedProperty.GetArrayElementAtIndex(index);
@@ -75,7 +76,7 @@ public class twodAnimatorEditor : Editor {
     public override void OnInspectorGUI()
     {
         //base.OnInspectorGUI();
-
+        twodController tc;
         twodAnimator myTwod = (twodAnimator)target;
         //SerializedProperty animations = serializedObject.FindProperty("Animations");
         SerializedProperty useDefs = serializedObject.FindProperty("useDefaultFrameFrecuency");
@@ -90,12 +91,13 @@ public class twodAnimatorEditor : Editor {
         EditorGUILayout.Space();
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Frame Frecuency", EditorStyles.boldLabel);
-        useDefs.SetValue<bool>(EditorGUILayout.Toggle("Use Default Frame Frecuency", useDefs.GetValue<bool>()));
+        EditorGUILayout.HelpBox("(Used when creating new animations)",MessageType.None);
+        useDefs.SetValue<bool>(EditorGUILayout.Toggle("Use Default Frame Frecuency", useDefs.GetValue<bool>(),GUILayout.MinWidth(300f)));
         bool UseDefs = useDefs.GetValue<bool>();
         if (UseDefs)
         {
             //We try to get the instance for the singleton (should be working on editor time)
-            twodController tc = twodController.instance;
+            tc = twodController.instance;
 
 
             if (tc == null)
@@ -117,7 +119,21 @@ public class twodAnimatorEditor : Editor {
             EditorGUILayout.LabelField("Frame Frecuency");
             framefrecuency.SetValue<float>(EditorGUILayout.Slider(framefrecuency.GetValue<float>(), 0, 5f));
             EditorGUILayout.EndHorizontal();
+            
+                
 
+        }
+        if (GUILayout.Button("Apply to all Animations", GUILayout.MaxWidth(160f)))
+        {
+            if (UseDefs)
+            {
+                tc = twodController.instance;
+                myTwod.ChangeAnimatorFrecuency(twodController.instance.frameFrequency);
+            }
+            else
+            {
+                myTwod.ChangeAnimatorFrecuency(framefrecuency.GetValue<float>());
+            }
         }
 
         EditorGUILayout.Space();
@@ -126,23 +142,40 @@ public class twodAnimatorEditor : Editor {
 
         serializedObject.Update();
         EditorGUILayout.Space();
-        list.DoLayoutList();
-        EditorGUILayout.BeginHorizontal();
-
-
-
-        if (GUILayout.Button("Update Twod Texture\nPreview", GUILayout.MinHeight(40f), GUILayout.MinWidth(150f)))
-        {
-            myTwod.InitializeAnimationsList();
-        } 
         if (list.serializedProperty.arraySize == 0)
         {
-            EditorGUILayout.HelpBox("Animation list will be auto filled by default animations with Frame Frecuency from above until it get as much Animations as in the Texture (see Texture Preview)\nExtra Animations entries will be deleted", MessageType.Info);
+            if(GUILayout.Button("Fill Animation List",GUILayout.MaxWidth(120f)))
+            {
+                myTwod.InitializeAnimationsList();
+                EditorUtility.SetDirty(target);
+            }
         }else
         {
-            EditorGUILayout.HelpBox("Remenber: if more items than Rows in Texture, they will be deleted", MessageType.Info);
+            list.DoLayoutList();
+            EditorGUILayout.BeginHorizontal();
+
+
+            
+            if (GUILayout.Button("Apply", GUILayout.MinHeight(40f), GUILayout.MinWidth(150f)) || firstPaint)
+            {
+                myTwod.InitializeAnimationsList();
+                EditorUtility.SetDirty(target);
+            }
+            if (list.serializedProperty.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox("Animation list will be auto filled by default animations with Frame Frecuency from above until it get as much Animations as in the Texture (see Texture Preview)\nExtra Animations entries will be deleted", MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("Remenber: if more items than Rows in Texture, they will be deleted", MessageType.Info);
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
-        EditorGUILayout.EndHorizontal();
+
+
+        
+        
 
 
         EditorGUILayout.Space();
@@ -158,10 +191,10 @@ public class twodAnimatorEditor : Editor {
 
 
         serializedObject.ApplyModifiedProperties();
-        
 
 
 
+        firstPaint = false;
 
 
 

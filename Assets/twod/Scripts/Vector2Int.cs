@@ -6,6 +6,15 @@ using UnityEngine;
 [System.Serializable]
 public class Vector2Int
 {
+
+    public static Vector2Int zero
+    {
+        get
+        {
+            return new Vector2Int(0, 0);
+        }
+    }
+
     #region Inner Variables
     /// <summary>
     /// Inner x
