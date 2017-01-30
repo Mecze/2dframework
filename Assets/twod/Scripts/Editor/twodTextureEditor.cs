@@ -17,10 +17,12 @@ public class twodTextureEditor : Editor
     private int currentY;
     private bool textureChanged = false;
     Texture2D maintex;
+    Texture2D guitex;
     Texture2D chosentex;
     private float yPos = 0f;
     private float xPos= 0f;
     private bool firstrun = true;
+    FilterMode lastFilterMode;
 
     void OnEnable()
     {
@@ -36,6 +38,10 @@ public class twodTextureEditor : Editor
         SerializedProperty chosenTexture = serializedObject.FindProperty("ChosedTexture");
         SerializedProperty useDefault = serializedObject.FindProperty("useDefaultCellSize");
         SerializedProperty AnimSets = serializedObject.FindProperty("AnimationSets");
+        SerializedProperty GUITexture = serializedObject.FindProperty("GUITexture");
+        SerializedProperty useFilterDef = serializedObject.FindProperty("useDefaultFilterMode");
+        SerializedProperty filterMode = serializedObject.FindProperty("myFilterMode");
+
 
 
 
@@ -47,6 +53,11 @@ public class twodTextureEditor : Editor
 
         //note: this part bear a lot of checks that will be used later on by other parts
         //of this editor script
+
+        if (firstrun)
+        {
+            lastFilterMode = filterMode.GetValue<FilterMode>();
+        }
 
         //We initialize ImageRect, used later
         Rect ImageRect = new Rect();
@@ -93,6 +104,7 @@ public class twodTextureEditor : Editor
         //We get MainTexture and the ObjectField for it (local version of maintex is mainly
         //unused by now. Kept it as a shorthand for its values, checks "if changed" are done by chosentex)
         maintex = texture2d.GetValue<Texture2D>();
+        guitex = GUITexture.GetValue<Texture2D>();
 
         //Now we draw the REAL control for chosentex ObjectField:
         EditorGUILayout.BeginHorizontal();
@@ -101,6 +113,49 @@ public class twodTextureEditor : Editor
         //iteration "CHANGED IF CHECKER" will be triggered and will update inner maintexture.
         chosenTexture.SetValue<Texture2D>((Texture2D)EditorGUILayout.ObjectField(chosenTexture.GetValue<Texture2D>(), typeof(Texture2D), false));        
         EditorGUILayout.EndHorizontal();
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Filter Mode:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Use Default FilterMode: ", GUILayout.MaxWidth(140f));
+        useFilterDef.SetValue<bool>(EditorGUILayout.Toggle(useFilterDef.GetValue<bool>()));
+        EditorGUILayout.EndHorizontal();
+
+        if (useFilterDef.GetValue<bool>())
+        {
+            twodController tc = twodController.instance;
+            if (tc == null)
+            {
+                //if no instance, we show an error:
+                EditorGUILayout.HelpBox("twodController is not present in the Scene!\nNo default values could be found!\nUse Default Filter Mode will be OFF", MessageType.Error);
+                useFilterDef.SetValue<bool>(false);
+                
+            }
+            else
+            {
+                //there IS an instance of the twodController, we get the filterMode as an uneditable control
+                EditorGUILayout.LabelField("FilterMode: " + tc.filterMode.ToString());
+                if (lastFilterMode != tc.filterMode)
+                {
+                    EditorGUILayout.HelpBox("Click on 'Set this Sprite' to update the Sprite\nAlso, The sprite will be updated upon playing", MessageType.Info);
+                }
+
+            }
+        }
+        if (!useFilterDef.GetValue<bool>())
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("FilterMode: ", GUILayout.MaxWidth(70f));
+            filterMode.SetValue<FilterMode>((FilterMode)EditorGUILayout.EnumPopup(filterMode.GetValue<FilterMode>()));
+            EditorGUILayout.EndHorizontal();
+            if (lastFilterMode != filterMode.GetValue<FilterMode>())
+            {
+                EditorGUILayout.HelpBox("Click on 'Set this Sprite' to update the Sprite\nAlso, The sprite will be updated upon playing", MessageType.Info);
+            }
+
+        }        
+        
+        
+
 
 
         //Cellsize init
@@ -169,7 +224,7 @@ public class twodTextureEditor : Editor
             }
                         
             //We drawn the maintexture now on the rect
-            EditorGUI.DrawPreviewTexture(new Rect(ImageRect.x, ImageRect.y, ImageRect.width+ 5f, ImageRect.height+ 5f), maintex);
+            EditorGUI.DrawPreviewTexture(new Rect(ImageRect.x, ImageRect.y, ImageRect.width+ 5f, ImageRect.height+ 5f), guitex);
             GUILayout.Space(ImageRect.height -20f );
         }
         else
@@ -407,7 +462,7 @@ public class twodTextureEditor : Editor
                 if (!checkValid(currentX,currentY,cellX,cellY)) { currentX = 0; currentY = 0; }
 
                 Texture celltex = null;
-                if (!failed) celltex =  myTwod.CropTexture(currentY, currentX);
+                if (!failed) celltex =  myTwod.CropTexture(currentY, currentX,true);
                 if (celltex != null)
                 {
                     //This whole part follows the same logic and mechanics than ImageRect setup.
@@ -431,6 +486,7 @@ public class twodTextureEditor : Editor
                     if (GUILayout.Button("Set this Sprite"))
                     {
                         myTwod.SetFrame(currentY, currentX, true);
+                        lastFilterMode = filterMode.GetValue<FilterMode>();
                     }
                     EditorGUILayout.HelpBox("Use arrows to chose a Cell from Texture Preview", MessageType.Info);
 

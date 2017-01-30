@@ -26,4 +26,10 @@ public class twodController : Singleton<twodController> {
     [SerializeField]
     [HideInInspector]
     public float frameFrequency;
+
+    [SerializeField]
+    [HideInInspector]
+    public FilterMode filterMode;
+
+
 }

@@ -33,6 +33,14 @@ public class twodTexture : MonoBehaviour {
     [HideInInspector]
     Texture2D mainTexture;
 
+    /// <summary>
+    /// GUI Texture Version of the Main Texture
+    /// </summary>
+    [SerializeField]
+    [HideInInspector]
+    Texture2D GUITexture;
+
+
     [SerializeField]
     [HideInInspector]
     Sprite ChosedSprite;
@@ -60,6 +68,21 @@ public class twodTexture : MonoBehaviour {
     [SerializeField]
     [HideInInspector]
     public List<twodAnimationSet> AnimationSets;
+
+    /// <summary>
+    /// Define if we use default FilterMode
+    /// </summary>
+    [SerializeField]
+    [HideInInspector]
+    bool useDefaultFilterMode = true;
+
+    /// <summary>
+    /// Define our current FilterMode
+    /// </summary>
+    [SerializeField]
+    [HideInInspector]
+    FilterMode myFilterMode;
+
 
     #endregion
 
@@ -295,9 +318,12 @@ public class twodTexture : MonoBehaviour {
     /// <param name="animation">The animation it is in (Y)</param>
     /// <param name="frame">The frame it is in (X)</param>
     /// <returns></returns>
-    public Sprite CropSprite(int animation, int frame)
+    public Sprite CropSprite(int animation, int frame, bool transparentToWhite = false)
     {
         if (mainTexture == null) return null;
+
+        FilterMode fm = useDefaultFilterMode ? twodController.instance.filterMode : myFilterMode;
+
         Vector2Int thisVector = cellSize;
         if (useDefaultCellSize) thisVector = twodController.instance.cellSize;
         //Get pixel starting positions
@@ -330,7 +356,34 @@ public class twodTexture : MonoBehaviour {
         //We get an array of pixels from initial position and size of the cell. (crop)
         Color[] pixels = mainTexture.GetPixels(posX, posY, thisVector.x, thisVector.y);
         //We create a new texture to store the cropeed pixels
-        Texture2D newCropped = new Texture2D(thisVector.x, thisVector.y);
+        Texture2D newCropped = new Texture2D(thisVector.x, thisVector.y,mainTexture.format,false,true);
+        newCropped.filterMode = fm;
+        newCropped.Apply();
+        if (transparentToWhite)
+        {
+            for (int x = 0; x < pixels.Length; x++)
+            {
+                if (pixels[x].a == 0f)
+                {
+                    Vector2Int pos = twodUtils.ArrayToVector(x, newCropped.width);
+                    bool white = (((pos.x - pos.y) - 4) & 4) == 4;
+
+                    if (white)
+                    {
+                        pixels[x] = Color.white;
+                    }
+                    else
+                    {
+                        pixels[x] = Color.grey;
+                        ColorUtility.TryParseHtmlString("#efefef", out pixels[x]);
+
+                    }
+                }
+            }
+        }
+
+
+
         //We now store the pixels into the new texture and apply for graphic card to update.
         newCropped.SetPixels(pixels);
         newCropped.Apply();
@@ -343,9 +396,11 @@ public class twodTexture : MonoBehaviour {
     /// <param name="animation">The animation it is in (Y)</param>
     /// <param name="frame">The frame it is in (X)</param>
     /// <returns></returns>
-    public Texture CropTexture(int animation, int frame)
+    public Texture CropTexture(int animation, int frame, bool transparentToWhite = false)
     {
         if (mainTexture == null) return null;
+
+        FilterMode fm = useDefaultFilterMode ? twodController.instance.filterMode : myFilterMode;
         //Get pixel starting positions
         Vector2Int thisVector = cellSize;
         if (useDefaultCellSize) thisVector = twodController.instance.cellSize;
@@ -389,11 +444,41 @@ public class twodTexture : MonoBehaviour {
             return null;
         }
         //We create a new texture to store the cropeed pixels
-        Texture2D newCropped = new Texture2D(thisVector.x, thisVector.y);
+        Texture2D newCropped = new Texture2D(thisVector.x, thisVector.y, TextureFormat.ARGB32, true, true);
         //We now store the pixels into the new texture and apply for graphic card to update.
         if (thisVector.x <= 0 || thisVector.y <= 0) return null;
 
+        if (transparentToWhite)
+        {
+            for (int x = 0; x < pixels.Length; x++)
+            {
+                if (pixels[x].a == 0f)
+                {
+                    Vector2Int pos = twodUtils.ArrayToVector(x, newCropped.width);
+                    bool white = (((pos.x - pos.y) - 4) & 4) == 4;
+
+                    if (white)
+                    {
+                        pixels[x] = Color.white;
+                    }
+                    else
+                    {
+                        pixels[x] = Color.grey;
+                        ColorUtility.TryParseHtmlString("#efefef", out pixels[x]);
+
+                    }
+                }
+            }
+        }
+
+
+
+        newCropped.filterMode = fm;
+        newCropped.Apply();
         newCropped.SetPixels(pixels);
+
+        
+
         newCropped.Apply();
         //We create a new Sprite with our texture and return
         return newCropped;
@@ -418,23 +503,64 @@ public class twodTexture : MonoBehaviour {
     public void SetMainTexture(Texture2D texture)
     {
         if (texture == null) { mainTexture = null; return; }
-        //sprite.texture.
-        Texture2D texture2d = new Texture2D((int)texture.width, (int)texture.height, texture.format, false);
-        texture2d.Apply();
-        //Texture2D texture2d = new Texture2D((int)sprite.texture.width, (int)sprite.texture.height,sprite.texture.format,false);
+        //sprite.texture.                
+
+        FilterMode fm = useDefaultFilterMode ? twodController.instance.filterMode : myFilterMode;
+
+        //we get pixels
         var pixels = texture.GetRawTextureData();
+
+        //We calculate the and setup the MAIN texture
+        Texture2D texture2d = new Texture2D((int)texture.width, (int)texture.height, texture.format, false, true);
+        texture2d.filterMode = fm;
+        texture2d.Apply();
         texture2d.LoadRawTextureData(pixels);
         texture2d.name = texture.name;
+        texture2d.mipMapBias = 0f;                
+        texture2d.alphaIsTransparency = true;
         texture2d.Apply();
         if (texture2d is Texture2D)
         {
             mainTexture = texture2d;
+            //mainTexture = texture2d;
         }
         else
         {
             Debug.Log("Cannot Convert into Texture2D");
         }
-        
+
+        if (Application.isPlaying) return;
+
+
+        Texture2D textureGUI = new Texture2D((int)texture2d.width, (int)texture2d.height, texture2d.format, false, true);
+        textureGUI.filterMode = fm;
+        textureGUI.Apply();
+        Color[] pixels2 = texture2d.GetPixels();
+        for (int x = 0; x < pixels2.Length; x++)
+        {
+            if (pixels2[x].a == 0f)
+            {
+                Vector2Int pos = twodUtils.ArrayToVector(x, texture2d.width);
+                bool white = (((pos.x-pos.y) - 4) & 4) == 4;
+
+                if (white)
+                {
+                    pixels2[x] = Color.white;
+                }else
+                {
+                    pixels2[x] = Color.grey;
+                    ColorUtility.TryParseHtmlString("#efefef", out pixels2[x]);
+                    
+                }
+            }
+        }
+        textureGUI.SetPixels(pixels2);
+        textureGUI.Apply();
+
+        GUITexture = textureGUI;
+
+
+
     }
     /// <summary>
     /// Changes the mainTexture of this twodTexture
@@ -443,11 +569,14 @@ public class twodTexture : MonoBehaviour {
     public void SetMainTexture(Sprite sprite)
     {
         if (sprite == null) { mainTexture = null; return; }
+        FilterMode fm = useDefaultFilterMode ? twodController.instance.filterMode : myFilterMode;
         //sprite.texture.
         Texture2D texture2d = new Texture2D((int)sprite.texture.width, (int)sprite.texture.height, sprite.texture.format, false);
         texture2d.Apply();
         //Texture2D texture2d = new Texture2D((int)sprite.texture.width, (int)sprite.texture.height,sprite.texture.format,false);
         var pixels = sprite.texture.GetRawTextureData();
+        texture2d.filterMode = fm;
+        texture2d.Apply();
         texture2d.LoadRawTextureData(pixels);
         texture2d.name = sprite.name;
         texture2d.Apply();
@@ -459,10 +588,47 @@ public class twodTexture : MonoBehaviour {
         {
             Debug.Log("Cannot Convert Sprite into Texture2D");
         }
+
+
+
+        if (Application.isPlaying) return;
+
+
+        Texture2D textureGUI = new Texture2D((int)texture2d.width, (int)texture2d.height, texture2d.format, false, false);
+        textureGUI.filterMode = fm;
+        textureGUI.Apply();
+        Color[] pixels2 = texture2d.GetPixels();
+        for (int x = 0; x < pixels2.Length; x++)
+        {
+            if (pixels2[x].a == 0f)
+            {
+                Vector2Int pos = twodUtils.ArrayToVector(x, texture2d.width);
+                bool white = (((pos.x - pos.y) - 4) & 4) == 4;
+
+                if (white)
+                {
+                    pixels2[x] = Color.white;
+                }
+                else
+                {
+                    pixels2[x] = Color.grey;
+                    ColorUtility.TryParseHtmlString("#efefef", out pixels2[x]);
+
+                }
+            }
+        }
+        textureGUI.SetPixels(pixels2);
+        textureGUI.Apply();
+
+        GUITexture = textureGUI;
+
+
     }
 
 
 
     #endregion
+
+    
 
 }

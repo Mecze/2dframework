@@ -24,6 +24,7 @@ public class twodControllerEditor : Editor
 
     void OnEnable()
     {
+        m_Object = new UnityEditor.SerializedObject(target);
         twodController tc = (twodController)target;
         if (twodController.instance == null) twodController.instance = tc; //failsafe
         SerializedProperty cellsize = serializedObject.FindProperty("cellSize");
@@ -37,6 +38,7 @@ public class twodControllerEditor : Editor
         SerializedProperty isPersistant = serializedObject.FindProperty("isPersistent");
         SerializedProperty cellsize = serializedObject.FindProperty("cellSize");
         SerializedProperty frameFrecuency = serializedObject.FindProperty("frameFrequency");
+        SerializedProperty filterMode = serializedObject.FindProperty("filterMode");
 
         isPersistant.SetValue<bool>(EditorGUILayout.Toggle("Is Persistent", isPersistant.GetValue<bool>()));
         if (isPersistant.GetValue<bool>())
@@ -60,7 +62,9 @@ public class twodControllerEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Default Frame Frecuency");
         frameFrecuency.SetValue<float>(EditorGUILayout.Slider(frameFrecuency.GetValue<float>(),0,5f));
-
-
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Default Filter Mode");
+        filterMode.SetValue<FilterMode>((FilterMode)EditorGUILayout.EnumPopup(filterMode.GetValue<FilterMode>()));
+        m_Object.ApplyModifiedProperties();
     }
 }
