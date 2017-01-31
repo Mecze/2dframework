@@ -108,6 +108,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\twod\Scripts\Editor\NewControllerWindow.cs" />
     <Compile Include="Assets\twod\Scripts\Editor\NewSpriteWindow.cs" />
     <Compile Include="Assets\twod\Scripts\Editor\SerializedPropertyExtensions.cs" />
     <Compile Include="Assets\twod\Scripts\Editor\TouchableEditor.cs" />

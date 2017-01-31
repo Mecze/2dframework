@@ -19,8 +19,8 @@ public class twodTextureEditor : Editor
     Texture2D maintex;
     Texture2D guitex;
     Texture2D chosentex;
-    private float yPos = 0f;
-    private float xPos= 0f;
+    //private float yPos = 0f;
+    //private float xPos= 0f;
     private bool firstrun = true;
     FilterMode lastFilterMode;
 
@@ -37,7 +37,7 @@ public class twodTextureEditor : Editor
         SerializedProperty texture2d = serializedObject.FindProperty("mainTexture");
         SerializedProperty chosenTexture = serializedObject.FindProperty("ChosedTexture");
         SerializedProperty useDefault = serializedObject.FindProperty("useDefaultCellSize");
-        SerializedProperty AnimSets = serializedObject.FindProperty("AnimationSets");
+        //SerializedProperty AnimSets = serializedObject.FindProperty("AnimationSets");
         SerializedProperty GUITexture = serializedObject.FindProperty("GUITexture");
         SerializedProperty useFilterDef = serializedObject.FindProperty("useDefaultFilterMode");
         SerializedProperty filterMode = serializedObject.FindProperty("myFilterMode");

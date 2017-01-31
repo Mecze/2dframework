@@ -23,7 +23,7 @@ public delegate void GenericTwodEventHandler();
 [CustomEditor(typeof(twodAnimator))]
 public class twodAnimatorEditor : Editor {
     bool firstPaint = true;
-    private SerializedObject m_Object;
+    //private SerializedObject m_Object;
     private SerializedProperty m_Property;
     private ReorderableList list;
 
@@ -32,7 +32,7 @@ public class twodAnimatorEditor : Editor {
     void OnEnable()
     {
         twodAnimator myTwod = (twodAnimator)target;
-        m_Object = new UnityEditor.SerializedObject(target);
+        //m_Object = new UnityEditor.SerializedObject(target);
         SerializedProperty framefrecuency = serializedObject.FindProperty("frameFrecuency");
         //list = new ReorderableList(serializedObject,serializedObject.FindProperty("Animsdf"),)
         list = new ReorderableList(serializedObject, serializedObject.FindProperty("Animations"), false, true, false, false);        
@@ -156,11 +156,12 @@ public class twodAnimatorEditor : Editor {
 
 
             
-            if (GUILayout.Button("Apply", GUILayout.MinHeight(40f), GUILayout.MinWidth(150f)) || firstPaint)
+            if (GUILayout.Button("Apply", GUILayout.MinHeight(40f), GUILayout.MinWidth(150f),GUILayout.MaxHeight(50f),GUILayout.MaxWidth(160f)) || firstPaint)
             {
                 myTwod.InitializeAnimationsList();
                 EditorUtility.SetDirty(target);
             }
+            /*
             if (list.serializedProperty.arraySize == 0)
             {
                 EditorGUILayout.HelpBox("Animation list will be auto filled by default animations with Frame Frecuency from above until it get as much Animations as in the Texture (see Texture Preview)\nExtra Animations entries will be deleted", MessageType.Info);
@@ -169,7 +170,7 @@ public class twodAnimatorEditor : Editor {
             {
                 EditorGUILayout.HelpBox("Remenber: if more items than Rows in Texture, they will be deleted", MessageType.Info);
             }
-
+            */
             EditorGUILayout.EndHorizontal();
         }
 

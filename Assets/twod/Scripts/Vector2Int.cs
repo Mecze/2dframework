@@ -98,4 +98,10 @@ public class Vector2Int
     {
         return new Vector2Int(Mathf.FloorToInt(vector.x), Mathf.FloorToInt(vector.y));
     }
+    public override string ToString()
+    {
+        return "x: " + _x.ToString() + " y: " + _y.ToString();
+
+
+    }
 }

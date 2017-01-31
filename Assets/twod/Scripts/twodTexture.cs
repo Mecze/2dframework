@@ -625,6 +625,59 @@ public class twodTexture : MonoBehaviour {
 
     }
 
+    /// <summary>
+    /// This Method is used to fully config this twod Texture from outside
+    /// when created by other tools
+    /// </summary>
+    /// <param name="texture">Texture to use</param>
+    /// <param name="filtermode">filterMode to use (Will be overwritten by default value)</param>
+    /// <param name="cellsize">cellsize to use (Will be overwritten by default value)</param>
+    /// <param name="usedefaultcellsize">Use default cellsize. Needs twodController</param>
+    /// <param name="usedefaultfiltermode">use default filter. Needs twodController</param>
+    public bool SetThisSprite(Texture texture,FilterMode filtermode, Vector2Int cellsize, bool usedefaultcellsize, bool usedefaultfiltermode)
+    {
+        this.useDefaultFilterMode = usedefaultfiltermode;
+        this.useDefaultCellSize = usedefaultcellsize;
+        if ((usedefaultcellsize || usedefaultfiltermode) && twodController.instance == null)
+        {
+            return false;
+        }
+
+        this.myFilterMode = this.useDefaultFilterMode ? twodController.instance.filterMode : filtermode;
+        this.cellSize = this.useDefaultCellSize ? twodController.instance.cellSize : cellsize;
+
+        this.SetMainTexture(texture);
+        return true;
+    }
+
+    /// <summary>
+    /// This Method is used to fully config this twod Texture from outside
+    /// when created by other tools
+    /// </summary>
+    /// <param name="texture">Texture to use</param>
+    /// <param name="filtermode">filterMode to use (Will be overwritten by default value)</param>
+    /// <param name="cellsize">cellsize to use (Will be overwritten by default value)</param>
+    /// <param name="usedefaultcellsize">Use default cellsize. Needs twodController</param>
+    /// <param name="usedefaultfiltermode">use default filter. Needs twodController</param>
+    public bool SetThisSprite(Texture2D texture, FilterMode filtermode, Vector2Int cellsize, bool usedefaultcellsize, bool usedefaultfiltermode)
+    {
+        return SetThisSprite((Texture)texture, filtermode, cellsize, usedefaultcellsize, usedefaultfiltermode);
+    }
+
+    /// <summary>
+    /// This Method is used to fully config this twod Texture from outside
+    /// when created by other tools
+    /// </summary>
+    /// <param name="texture">Texture to use</param>
+    /// <param name="filtermode">filterMode to use (Will be overwritten by default value)</param>
+    /// <param name="cellsize">cellsize to use (Will be overwritten by default value)</param>
+    /// <param name="usedefaultcellsize">Use default cellsize. Needs twodController</param>
+    /// <param name="usedefaultfiltermode">use default filter. Needs twodController</param>
+    public bool SetThisSprite(Sprite sprite, FilterMode filtermode,Vector2Int cellsize, bool usedefaultcellsize, bool usedefaultfiltermode)
+    {
+        return SetThisSprite(sprite.texture, filtermode, cellsize, usedefaultcellsize, usedefaultfiltermode);
+    }
+
 
 
     #endregion

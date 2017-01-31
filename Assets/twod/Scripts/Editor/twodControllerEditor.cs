@@ -26,8 +26,8 @@ public class twodControllerEditor : Editor
     {
         m_Object = new UnityEditor.SerializedObject(target);
         twodController tc = (twodController)target;
-        if (twodController.instance == null) twodController.instance = tc; //failsafe
-        SerializedProperty cellsize = serializedObject.FindProperty("cellSize");
+        if (twodController.instance == null || GameObject.FindObjectsOfType<twodController>().Length < 2) twodController.instance = tc; //failsafe
+       
 
 
 
